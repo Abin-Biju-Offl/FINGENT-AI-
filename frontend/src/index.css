@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#111111] text-[#FAF7F0] antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-[#B8860B];
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply backdrop-blur-md bg-white/80 dark:bg-gray-800/80 rounded-xl shadow-glass border border-white/20;
+  }
+  
+  .btn-primary {
+    @apply px-6 py-3 text-[#111111] rounded-lg font-semibold transform hover:-translate-y-0.5 transition-all duration-200;
+    background: linear-gradient(90deg, #B8860B 0%, #D4AF37 50%, #B8860B 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  
+  .text-gradient-gold {
+    background: linear-gradient(90deg, #B8860B 0%, #D4AF37 50%, #B8860B 100%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 3s infinite;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-[#D4AF37] text-[#111111] border-2 border-[#D4AF37] rounded-lg font-semibold hover:bg-[#e6c968] hover:border-[#e6c968] hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200;
+  }
+}
