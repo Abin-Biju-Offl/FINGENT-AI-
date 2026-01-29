@@ -3,23 +3,48 @@
 .env.local
 .env.*.local
 
-# Node modules
+# Node modules - Never commit (Vercel rebuilds)
 frontend/node_modules/
 frontend/dist/
+node_modules/
 
-# Python
+# Python - Never commit (bloats repo, should use requirements-vercel.txt)
 __pycache__/
-*.py[cod]
+*.pyc
+*.pyo
+*.pyd
 *$py.class
 .venv/
 venv/
+env/
+ENV/
+
+# Old dependencies file (use requirements-vercel.txt instead)
+# requirements.txt  <-- CRITICAL: Use requirements-vercel.txt only
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Build/deployment artifacts
+build/
+dist/
+.egg-info/
+.pytest_cache/
+
+# Old/unused files (keep local but don't commit)
+main.py
+app.py
+fingent_ai_working.py
+templates/
+static/
+*.txt
+HACK*

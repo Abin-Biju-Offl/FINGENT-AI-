@@ -1,7 +1,8 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "pip install -r requirements-vercel.txt",
+  "installCommand": "pip install --no-cache-dir -r requirements-vercel.txt",
+  "devCommand": "python -m uvicorn api.index:app --port 3001 --reload",
   "rewrites": [
     {
       "source": "/api/:path*",
@@ -16,7 +17,8 @@
     "api/index.py": {
       "memory": 1024,
       "maxDuration": 30,
-      "runtime": "python3.11"
+      "runtime": "python3.11",
+      "includeFiles": "requirements-vercel.txt"
     }
   },
   "regions": ["iad1"],

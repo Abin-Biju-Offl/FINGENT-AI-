@@ -1,0 +1,48 @@
+# Exclude everything unnecessary from Vercel deployment
+# Only api/ and frontend/src should be deployed
+
+# Old/unused files
+requirements.txt
+main.py
+app.py
+fingent_ai_working.py
+fingent\ prompt.txt
+Hack\ a\ cure.txt
+*.txt
+templates/
+static/
+
+# Development files
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.git/
+.gitignore
+.env*
+
+# Build artifacts (Vercel rebuilds these)
+frontend/dist/
+frontend/node_modules/
+
+# Documentation (not needed for runtime)
+*.md
+OPTIMIZATION_REPORT.md
+DEPLOYMENT_GUIDE.md
+VERCEL_DEPLOYMENT.md
+DEPLOYMENT_SUMMARY.txt
+setup.sh
+setup.bat
+LICENSE
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test files
+test/
+tests/
+.pytest_cache/
