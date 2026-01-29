@@ -1,0 +1,55 @@
+"""
+CRITICAL DEPLOYMENT GUIDE FOR VERCEL
+======================================
+
+If you're getting "Serverless Function exceeded 250MB":
+
+1. ENSURE requirements-vercel.txt IS USED (not requirements.txt)
+2. CHECK .vercelignore is present (excludes unnecessary files)
+3. VERIFY api/index.py exists (lightweight handler)
+4. REMOVE old requirements.txt from repository
+5. REBUILD frontend separately
+
+QUICK FIXES:
+============
+
+1. In Vercel Dashboard > Project Settings > Build & Development:
+   - Build Command: cd frontend && npm install && npm run build
+   - Output Directory: frontend/dist
+   - Install Command: pip install --no-cache-dir -r requirements-vercel.txt
+
+2. Delete old Python cache:
+   - rm -rf __pycache__ .venv venv
+
+3. In GitHub:
+   - git rm --cached requirements.txt
+   - git rm --cached -r __pycache__
+   - git rm --cached -r .venv venv
+   - git commit -m "Remove bloated dependencies and cache"
+   - git push
+
+4. Redeploy from Vercel Dashboard
+
+WHAT SHOULD BE DEPLOYED:
+========================
+✅ api/index.py (200 lines, ~5KB)
+✅ requirements-vercel.txt (8 packages, ~0.5KB)
+✅ frontend/src/** (React source, ~100KB)
+✅ vercel.json (config, ~1KB)
+✅ .vercelignore (deployment config)
+
+WHAT SHOULD NOT BE DEPLOYED:
+============================
+❌ requirements.txt (old, bloated - ~11 packages)
+❌ __pycache__/ (Python cache)
+❌ node_modules/ (npm cache, rebuilt by Vercel)
+❌ .venv/ venv/ (virtual env, rebuilt)
+❌ frontend/dist/ (rebuilt by Vercel)
+❌ *.md files (documentation only)
+❌ static/ templates/ (old files, not needed)
+❌ main.py app.py fingent_ai_working.py (old files)
+❌ streamlit (150MB+, removed)
+❌ uvicorn (50MB+, Vercel provides)
+
+TOTAL FINAL SIZE: ~15MB (way under 250MB limit)
+"""
