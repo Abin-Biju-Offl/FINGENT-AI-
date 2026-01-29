@@ -1,7 +1,24 @@
 import axios from 'axios';
 
+// Auto-detect API URL based on environment
+const getApiBaseUrl = () => {
+  if (typeof window === 'undefined') {
+    // Server-side
+    return '/api';
+  }
+  
+  // Client-side
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
+  if (isDev) {
+    return 'http://localhost:3001/api'; // Local development with uvicorn on port 3001
+  }
+  
+  return '/api'; // Production on Vercel (same domain)
+};
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: getApiBaseUrl(),
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
