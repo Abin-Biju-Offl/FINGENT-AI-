@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
+from groq import Groq
 import requests
 from datetime import datetime, timedelta
 from typing import Optional, List
@@ -30,20 +30,19 @@ app.add_middleware(
 )
 
 # API Keys
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '').strip()
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '').strip()
 NEWS_API_KEY = os.getenv('NEWS_API_KEY', '').strip()
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '').strip()
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '').strip()
 
-# Initialize Gemini
-gemini_model = None
-if GEMINI_API_KEY and len(GEMINI_API_KEY) > 10:
+# Initialize Groq
+groq_client = None
+if GROQ_API_KEY and len(GROQ_API_KEY) > 10:
     try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        gemini_model = genai.GenerativeModel('gemini-pro')
-        print("✅ Gemini initialized")
+        groq_client = Groq(api_key=GROQ_API_KEY)
+        print("✅ Groq initialized")
     except Exception as e:
-        print(f"❌ Gemini error: {e}")
+        print(f"❌ Groq error: {e}")
 
 # ============ DATA MODELS ============
 class ChatMessage(BaseModel):
@@ -67,17 +66,17 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "gemini_ready": gemini_model is not None
+        "groq_ready": groq_client is not None
     }
 
 # ============ CHAT ENDPOINT ============
 @app.post("/api/chat")
 async def chat(message: ChatMessage):
-    """AI Chat endpoint using Gemini"""
+    """AI Chat endpoint using Groq"""
     try:
-        if not gemini_model:
+        if not groq_client:
             return ChatResponse(
-                response="Gemini API not configured. Please set GEMINI_API_KEY.",
+                response="Groq API not configured. Please set GROQ_API_KEY.",
                 timestamp=datetime.now().isoformat()
             )
         
@@ -99,10 +98,15 @@ User Question: {message.message}
 
 Provide a concise, helpful response (2-4 sentences max):"""
         
-        response = gemini_model.generate_content(financial_prompt)
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": financial_prompt}],
+            temperature=0.7,
+            max_tokens=1024
+        )
         
         return ChatResponse(
-            response=response.text.strip() if response and response.text else "Unable to generate response",
+            response=response.choices[0].message.content.strip() if response.choices else "Unable to generate response",
             timestamp=datetime.now().isoformat()
         )
     except Exception as e:
@@ -167,9 +171,9 @@ async def get_news(category: str = "all"):
 async def get_savings_advice(request: SavingsAdviceRequest):
     """Get personalized savings advice"""
     try:
-        if not gemini_model:
+        if not groq_client:
             return {
-                "advice": "Configure Gemini API for personalized advice"
+                "advice": "Configure Groq API for personalized advice"
             }
         
         if request.income <= 0:
@@ -184,10 +188,15 @@ async def get_savings_advice(request: SavingsAdviceRequest):
 
 Give 2-3 actionable, specific recommendations in 3-4 sentences max. Be practical and realistic."""
         
-        response = gemini_model.generate_content(prompt)
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=512
+        )
         
         return {
-            "advice": response.text.strip() if response and response.text else "Unable to generate advice",
+            "advice": response.choices[0].message.content.strip() if response.choices else "Unable to generate advice",
             "savings_rate": round(savings_rate, 2),
             "monthly_savings": round(request.income - request.expenses, 2)
         }
