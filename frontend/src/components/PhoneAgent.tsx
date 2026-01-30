@@ -58,14 +58,16 @@ const PhoneAgent = ({ isOpen, onClose }: PhoneAgentProps) => {
     
     try {
       const result = await apiService.makePhoneCall(validation.message);
-      setCallResult(result);
-      
-      if (result.status === 'success') {
-        setTimeout(() => {
-          setPhoneNumber('');
-          setCallResult(null);
-        }, 5000);
-      }
+      // Ensure result has status property
+      setCallResult({
+        status: 'success',
+        message: result.message,
+        call_sid: result.call_sid
+      });
+      setTimeout(() => {
+        setPhoneNumber('');
+        setCallResult(null);
+      }, 5000);
     } catch (error: any) {
       setCallResult({
         status: 'error',

@@ -11,7 +11,6 @@ import Footer from './components/Footer';
 import AIChat from './components/AIChat';
 
 function App() {
-  const [darkMode, setDarkMode] = useState(true);
   const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
@@ -20,7 +19,7 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
+      <Navbar />
       
       <main>
         <Hero />

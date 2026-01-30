@@ -59,7 +59,6 @@ const Hero = () => {
   }, []);
 
   const words1 = ['Smart', 'Financial'];
-  const words2 = ['Decisions', 'Made', 'Easy'];
 
   return (
     <>

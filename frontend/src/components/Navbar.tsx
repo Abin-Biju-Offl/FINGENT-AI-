@@ -1,11 +1,7 @@
 import { motion } from 'framer-motion';
 
-interface NavbarProps {
-  darkMode: boolean;
-  setDarkMode: (value: boolean) => void;
-}
 
-const Navbar = ({ darkMode, setDarkMode }: NavbarProps) => {
+const Navbar = () => {
   const navItems = ['Home', 'Markets', 'Tools', 'News', 'Contact'];
 
   const scrollToSection = (item: string) => {
