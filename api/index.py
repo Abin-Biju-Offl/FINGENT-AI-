@@ -40,9 +40,11 @@ groq_client = None
 if GROQ_API_KEY and len(GROQ_API_KEY) > 10:
     try:
         groq_client = Groq(api_key=GROQ_API_KEY)
-        print("✅ Groq initialized")
+        print(f"✅ Groq initialized successfully")
     except Exception as e:
         print(f"❌ Groq error: {e}")
+else:
+    print(f"❌ GROQ_API_KEY not found or invalid. Key length: {len(GROQ_API_KEY) if GROQ_API_KEY else 0}")
 
 # ============ DATA MODELS ============
 class ChatMessage(BaseModel):

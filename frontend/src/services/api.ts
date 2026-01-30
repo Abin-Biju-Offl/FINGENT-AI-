@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
   const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   
   if (isDev) {
-    return 'http://localhost:3001/api'; // Local development with uvicorn on port 3001
+    return 'http://localhost:8000/api'; // Local development with uvicorn on port 8000
   }
   
   return '/api'; // Production on Vercel (same domain)

@@ -3,6 +3,6 @@ python-multipart==0.0.6
 pydantic==2.5.0
 python-dotenv==1.0.0
 twilio==8.10.0
-groq==0.4.1
+groq
 requests==2.31.0
 aiofiles==23.2.1
