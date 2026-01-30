@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
@@ -9,6 +9,8 @@ import requests
 from datetime import datetime, timedelta
 from typing import Optional, List
 import json
+from twilio.rest import Client
+from twilio.twiml.voice_response import VoiceResponse, Gather
 
 # Load environment variables
 load_dotenv()
@@ -34,6 +36,7 @@ GROQ_API_KEY = os.getenv('GROQ_API_KEY', '').strip()
 NEWS_API_KEY = os.getenv('NEWS_API_KEY', '').strip()
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '').strip()
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '').strip()
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '+18447971620').strip()
 
 # Initialize Groq
 groq_client = None
@@ -45,6 +48,15 @@ if GROQ_API_KEY and len(GROQ_API_KEY) > 10:
         print(f"❌ Groq error: {e}")
 else:
     print(f"❌ GROQ_API_KEY not found or invalid. Key length: {len(GROQ_API_KEY) if GROQ_API_KEY else 0}")
+
+# Initialize Twilio
+twilio_client = None
+if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
+    try:
+        twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        print(f"✅ Twilio initialized successfully")
+    except Exception as e:
+        print(f"❌ Twilio error: {e}")
 
 # ============ DATA MODELS ============
 class ChatMessage(BaseModel):
@@ -208,9 +220,9 @@ Give 2-3 actionable, specific recommendations in 3-4 sentences max. Be practical
 # ============ PHONE CALL ENDPOINT ============
 @app.post("/api/call")
 async def make_phone_call(call: PhoneCall):
-    """Make outbound call (Twilio integration)"""
+    """Make outbound call with AI voice agent (Twilio + Groq)"""
     try:
-        if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
+        if not twilio_client:
             return JSONResponse(
                 status_code=400,
                 content={
@@ -226,22 +238,154 @@ async def make_phone_call(call: PhoneCall):
                 status_code=400,
                 content={
                     "status": "error",
-                    "message": "Phone number must start with +"
+                    "message": "Phone number must start with + (e.g., +1XXXXXXXXXX)"
                 }
             )
         
-        # In production, use Twilio SDK to make call
-        # For now, return success response
-        return {
-            "status": "success",
-            "message": f"Call initiated to {phone}",
-            "call_id": f"call_{datetime.now().timestamp()}"
-        }
+        # Make actual Twilio call
+        try:
+            # Use ngrok or deployed URL for webhook
+            # For development, you need to expose your local server
+            base_url = os.getenv('API_BASE_URL', 'http://localhost:8000')
+            
+            call_obj = twilio_client.calls.create(
+                to=phone,
+                from_=TWILIO_PHONE_NUMBER,
+                url=f"{base_url}/api/voice/welcome",
+                method='POST'
+            )
+            
+            return {
+                "status": "success",
+                "message": f"Call initiated to {phone}",
+                "call_sid": call_obj.sid,
+                "to_number": phone,
+                "timestamp": datetime.now().isoformat()
+            }
+        except Exception as twilio_error:
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "status": "error",
+                    "message": f"Twilio error: {str(twilio_error)}"
+                }
+            )
     except Exception as e:
         return JSONResponse(
             status_code=500,
             content={"status": "error", "message": str(e)}
         )
+
+# ============ TWILIO VOICE WEBHOOKS ============
+@app.post("/api/voice/welcome")
+async def voice_welcome(request: Request):
+    """Initial voice message when call connects"""
+    response = VoiceResponse()
+    
+    gather = Gather(
+        input='speech',
+        action='/api/voice/process',
+        method='POST',
+        speech_timeout='auto',
+        language='en-US'
+    )
+    
+    gather.say(
+        "Hello! I am Fingent AI, your personal financial advisor. "
+        "How can I help you with your finances today? "
+        "You can ask about investments, savings, budgeting, or any financial topic.",
+        voice='Polly.Joanna'
+    )
+    
+    response.append(gather)
+    
+    # If no input, repeat
+    response.say("I didn't catch that. Please try again.", voice='Polly.Joanna')
+    response.redirect('/api/voice/welcome')
+    
+    return Response(content=str(response), media_type="application/xml")
+
+@app.post("/api/voice/process")
+async def voice_process(
+    SpeechResult: Optional[str] = Form(None),
+    CallSid: Optional[str] = Form(None)
+):
+    """Process user speech and generate AI response"""
+    response = VoiceResponse()
+    
+    if not SpeechResult:
+        response.say("I didn't hear anything. Let me transfer you back.", voice='Polly.Joanna')
+        response.redirect('/api/voice/welcome')
+        return Response(content=str(response), media_type="application/xml")
+    
+    # Get AI response from Groq
+    try:
+        if groq_client:
+            financial_prompt = f"""You are Fingent AI, a voice-based financial advisor on a phone call. 
+The user said: "{SpeechResult}"
+
+Provide a clear, concise, and conversational response (2-3 sentences max) that:
+- Sounds natural when spoken aloud
+- Gives practical financial advice
+- Is easy to understand over the phone
+
+Keep it brief and friendly:"""
+            
+            ai_response = groq_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": financial_prompt}],
+                temperature=0.7,
+                max_tokens=256
+            )
+            
+            advice = ai_response.choices[0].message.content.strip() if ai_response.choices else "I'm having trouble processing that right now."
+        else:
+            advice = "I'm currently unable to provide personalized advice. Please try the chat feature on our website."
+        
+        # Speak the AI response
+        response.say(advice, voice='Polly.Joanna')
+        
+        # Ask for follow-up
+        gather = Gather(
+            input='speech',
+            action='/api/voice/process',
+            method='POST',
+            speech_timeout='auto',
+            language='en-US'
+        )
+        
+        gather.say(
+            "Do you have any other questions about your finances?",
+            voice='Polly.Joanna'
+        )
+        
+        response.append(gather)
+        
+        # End call option
+        response.say("Thank you for using Fingent AI. Have a great day!", voice='Polly.Joanna')
+        response.hangup()
+        
+    except Exception as e:
+        print(f"Voice processing error: {e}")
+        response.say(
+            "I apologize, but I'm experiencing technical difficulties. Please visit our website for assistance.",
+            voice='Polly.Joanna'
+        )
+        response.hangup()
+    
+    return Response(content=str(response), media_type="application/xml")
+
+@app.post("/api/voice/goodbye")
+async def voice_goodbye():
+    """End call gracefully"""
+    response = VoiceResponse()
+    response.say(
+        "Thank you for calling Fingent AI. We're here to help you achieve your financial goals. Goodbye!",
+        voice='Polly.Joanna'
+    )
+    response.hangup()
+    
+    return Response(content=str(response), media_type="application/xml")
 
 # ============ ROOT ENDPOINT ============
 @app.get("/api")
@@ -251,12 +395,17 @@ async def root():
         "name": "Fingent AI API",
         "version": "1.0.0",
         "status": "active",
+        "groq_ready": groq_client is not None,
+        "twilio_ready": twilio_client is not None,
         "endpoints": [
             "/api/health",
             "/api/chat",
             "/api/news",
             "/api/savings/advice",
-            "/api/call"
+            "/api/call",
+            "/api/voice/welcome",
+            "/api/voice/process",
+            "/api/voice/goodbye"
         ]
     }
 
