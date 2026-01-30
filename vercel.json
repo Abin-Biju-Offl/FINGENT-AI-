@@ -1,7 +1,6 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "pip install --no-cache-dir -r requirements-vercel.txt",
   "devCommand": "python -m uvicorn api.index:app --port 3001 --reload",
   "rewrites": [
     {
