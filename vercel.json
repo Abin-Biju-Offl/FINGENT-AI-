@@ -17,7 +17,6 @@
     "api/index.py": {
       "memory": 512,
       "maxDuration": 30,
-      "runtime": "python3.11",
       "includeFiles": "requirements-vercel.txt"
     }
   },
