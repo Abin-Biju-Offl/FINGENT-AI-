@@ -1,0 +1,14 @@
+# Additional exclusions for deployment size optimization
+node_modules/
+frontend/node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+README.md
+*.md
+.DS_Store
+.vscode/
+.idea/

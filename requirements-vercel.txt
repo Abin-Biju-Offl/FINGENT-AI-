@@ -1,8 +1,16 @@
+# Minimal production dependencies for Vercel deployment
+# Optimized to keep serverless function under 250MB
+
+# Core framework (lightweight)
 fastapi==0.104.1
 python-multipart==0.0.6
 pydantic==2.5.0
+
+# Environment and utilities
 python-dotenv==1.0.0
-twilio==8.10.0
-groq
-requests==2.31.0
 aiofiles==23.2.1
+requests==2.31.0
+
+# AI and communication services
+groq>=1.0.0
+twilio==8.10.0
