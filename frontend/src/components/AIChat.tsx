@@ -95,7 +95,7 @@ const AIChat = ({ isOpen, onClose }: AIChatProps) => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed bottom-24 right-8 w-[420px] h-[600px] glass-card shadow-2xl z-50 flex flex-col overflow-hidden"
+            className="fixed bottom-4 right-4 left-4 sm:bottom-24 sm:right-8 sm:left-auto w-auto sm:w-[420px] h-[85vh] sm:h-[600px] max-h-[600px] glass-card shadow-2xl z-50 flex flex-col overflow-hidden rounded-xl sm:rounded-2xl"
           >
             {/* Header */}
             <div className="bg-gradient-primary p-4 flex items-center justify-between">
